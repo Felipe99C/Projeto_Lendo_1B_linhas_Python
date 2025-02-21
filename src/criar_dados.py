@@ -2,7 +2,7 @@
 import argparse
 import csv
 import logging
-import os
+from tqdm import tqdm
 import random
 import time
 from pathlib import Path
@@ -43,7 +43,7 @@ def build_weather_station_name_list() -> list[str]:
     """
     station_names = set()
 
-    file_path = Path("D:\Lendo 1B linhas\Lendo_1B_linhas\data\weather_stations.csv")
+    file_path = Path("D:\\Lendo 1B linhas\\Lendo_1B_linhas\\data\\weather_stations.csv")
 
     if not file_path.exists():
         logging.error(f"Arquivo {file_path} não encontrado.")
@@ -125,17 +125,14 @@ def build_test_data(weather_station_names: list[str], num_rows_to_create: int) -
             full_batches = num_rows_to_create // batch_size
             leftover = num_rows_to_create % batch_size
 
-            for batch_index in range(full_batches):
+            for batch_index in tqdm(range(full_batches), desc="Processando batches", total=full_batches):
                 batch = random.choices(weather_station_names, k=batch_size)
                 lines = "\n".join(
                     [f"{station};{random.uniform(coldest_temp, hottest_temp):.1f}" for station in batch]
                 )
                 file.write(lines + "\n")
-                # Loga progresso a cada 1% dos batches processados
-                if (batch_index + 1) % max(1, full_batches // 100) == 0:
-                    logging.info(f"{batch_index + 1} de {full_batches} batches processados.")
 
-            # Trata os registros restantes, se houver
+            # Processa os registros restantes, se houver
             if leftover:
                 batch = random.choices(weather_station_names, k=leftover)
                 lines = "\n".join(
@@ -146,16 +143,18 @@ def build_test_data(weather_station_names: list[str], num_rows_to_create: int) -
         logging.error("Erro ao escrever o arquivo", exc_info=True)
         exit(1)
 
-    elapsed_time = time.time() - start_time
-    file_size = output_file.stat().st_size
-    human_file_size = convert_bytes(file_size)
-    logging.info(f"\n\nArquivo escrito com sucesso em {output_file}")
-    logging.info(f"Tamanho final: {human_file_size}")
-    logging.info(f"Tempo decorrido: {format_elapsed_time(elapsed_time)}\n")
+        elapsed_time = time.time() - start_time
+        file_size = output_file.stat().st_size
+        human_file_size = convert_bytes(file_size)
+        logging.info(f"\n\nArquivo escrito com sucesso em {output_file}")
+        logging.info(f"Tamanho final: {human_file_size}")
+        logging.info(f"Tempo decorrido: {format_elapsed_time(elapsed_time)}\n")
 
 def main() -> None:
     print("Inciando..... \n")
-    num_rows_to_create =  10_000_000 # parse_arguments()
+
+    num_rows_to_create =  100_000_000 # parse_arguments()  --> qtd de linhas que deseja criar.
+
     station_names = build_weather_station_name_list()
     print(estimate_file_size(station_names, num_rows_to_create))
     build_test_data(station_names, num_rows_to_create)
